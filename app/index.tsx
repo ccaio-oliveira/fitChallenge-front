@@ -11,7 +11,6 @@ export default function Index() {
         if (!loading && !user) {
             router.replace("/login");
         }
-        console.log("User:", user);
     }, [loading, user]);
 
     if (loading) {
