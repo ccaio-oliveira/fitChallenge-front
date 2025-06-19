@@ -2,8 +2,11 @@ import { useAuth } from "@/contexts/AuthContext";
 import api from "@/services/api";
 import { useRouter } from "expo-router";
 import { useState } from "react";
-import { Alert, Button, FlatList, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { Alert, Button, Dimensions, FlatList, Modal, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 import DateTimePicker from "@react-native-community/datetimepicker";
+import TaskForm from "@/components/Challenge/TaskForm";
+
+const maxHeight = Math.floor(Dimensions.get("window").height * 0.88);
 
 export default function ChallengeCreateScreen() {
     const { user } = useAuth();
@@ -17,34 +20,34 @@ export default function ChallengeCreateScreen() {
     const [showEndPicker, setShowEndPicker] = useState(false);
 
     const [tasks, setTasks] = useState<any[]>([]);
-    const [taskName, setTaskName] = useState("");
-    const [taskPointsWeekday, setTaskPointsWeekday] = useState("");
-    const [taskPointsWeekend, setTaskPointsWeekend] = useState("");
+    const [showTaskModal, setShowTaskModal] = useState(false);
+    const [editingTask, setEditingTask] = useState<any | null>(null);
+    const [editingIndex, setEditingIndex] = useState<number | null>(null);
 
     const [loading, setLoading] = useState(false);
 
-    const addTask = () => {
-        if (!taskName) {
-            Alert.alert("Informe o nome da tarefa");
-            return;
+    const handleSaveTask = (task: any) => {
+        if (editingIndex !== null) {
+            const copy = [...tasks];
+            copy[editingIndex] = task;
+            setTasks(copy);
+        } else {
+            setTasks([...tasks, task]);
         }
 
-        setTasks([
-            ...tasks,
-            {
-                name: taskName,
-                points_weekday: parseInt(taskPointsWeekday),
-                points_weekend: parseInt(taskPointsWeekend),
-            },
-        ]);
-
-        setTaskName("");
-        setTaskPointsWeekday("1");
-        setTaskPointsWeekend("2");
+        setShowTaskModal(false);
+        setEditingTask(null);
+        setEditingIndex(null);
     };
 
-    const removeTask = (index: number) => {
+    const handleRemoveTask = (index: number) => {
         setTasks(tasks.filter((_, i) => i !== index));
+    };
+
+    const handleEditTask = (task: any, index: number) => {
+        setEditingTask(task);
+        setEditingIndex(index);
+        setShowTaskModal(true);
     };
 
     const handleCreate = async () => {
@@ -132,36 +135,20 @@ export default function ChallengeCreateScreen() {
                             <Text style={styles.taskText}>
                                 {item.name} - {item.points_weekday}pt (semana) / {item.points_weekend}pt (fds)
                             </Text>
-                            <TouchableOpacity onPress={() => removeTask(index)}>
+                            <TouchableOpacity style={{ marginLeft: 12 }} onPress={() => handleEditTask(item, index)}>
+                                <Text style={{ color: "#1e90ff"}}>Editar</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity onPress={() => handleRemoveTask(index)}>
                                 <Text style={styles.removeTask}>Remover</Text>
                             </TouchableOpacity>
                         </View>
                     )}
+                    ListEmptyComponent={<Text style={{ color: "#888", marginVertical: 8 }}>Nenhuma tarefa adicionada.</Text>}
                 />
 
-                <View style={styles.taskForm}>
-                    <TextInput
-                        style={[styles.input, styles.taskInput]}
-                        placeholder="Nome da Tarefa"
-                        value={taskName}
-                        onChangeText={setTaskName}
-                    />
-                    <TextInput
-                        style={[styles.input, styles.taskInput]}
-                        placeholder="Pontos (semana)"
-                        keyboardType="numeric"
-                        value={taskPointsWeekday}
-                        onChangeText={setTaskPointsWeekday}
-                    />
-                    <TextInput
-                        style={[styles.input, styles.taskInput]}
-                        placeholder="Pontos (fim de semana)"
-                        keyboardType="numeric"
-                        value={taskPointsWeekend}
-                        onChangeText={setTaskPointsWeekend}
-                    />
-                    <Button title="+" onPress={addTask} />
-                </View>
+                <TouchableOpacity style={styles.addTaskButton} onPress={() => setShowTaskModal(true)}>
+                    <Text style={styles.addTaskButtonText}>+ Adicionar tarefa</Text>
+                </TouchableOpacity>
             </View>
 
             <TouchableOpacity
@@ -173,6 +160,33 @@ export default function ChallengeCreateScreen() {
                     {loading ? "Criando..." : "Criar Desafio"}
                 </Text>
             </TouchableOpacity>
+
+            <Modal
+                visible={showTaskModal}
+                animationType="slide"
+                transparent={true}
+                onRequestClose={() => setShowTaskModal(false)}
+            >
+                <View style={styles.modalOverlay}>
+                    <View style={styles.modalContent}>
+                        <ScrollView
+                            contentContainerStyle={{ flexGrow: 1 }}
+                            showsVerticalScrollIndicator={false}
+                            bounces={false}
+                        >
+                            <TaskForm
+                                initial={editingTask}
+                                onSave={handleSaveTask}
+                                onCancel={() => {
+                                    setShowTaskModal(false);
+                                    setEditingTask(null);
+                                    setEditingIndex(null);
+                                }}
+                            />
+                        </ScrollView>
+                    </View>
+                </View>
+            </Modal>
         </View>
     )
 }
@@ -202,6 +216,17 @@ const styles = StyleSheet.create({
     tasksTitle: {
         fontWeight: "bold",
         marginBottom: 8,
+    },
+    addTaskButton: {
+        marginTop: 8,
+        backgroundColor: "#1e90ff",
+        padding: 12,
+        borderRadius: 8,
+        alignItems: "center",
+    },
+    addTaskButtonText: {
+        color: "#fff",
+        fontWeight: "bold",
     },
     taskItem: {
         flexDirection: "row",
@@ -241,4 +266,19 @@ const styles = StyleSheet.create({
         fontWeight: "bold",
         fontSize: 16,
     },
+    modalOverlay: {
+        flex: 1,
+        backgroundColor: "rgba(0, 0, 0, 0.3)",
+        justifyContent: "center",
+        alignItems: "center",
+    },
+    modalContent: {
+        backgroundColor: "#fff",
+        padding: 24,
+        borderRadius: 12,
+        width: "96%",
+        maxWidth: 380,
+        maxHeight: maxHeight,
+        elevation: 4,
+    }
 });
