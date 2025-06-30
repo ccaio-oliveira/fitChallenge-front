@@ -40,7 +40,12 @@ export default function ChallengeDetailScreen() {
                             <Text style={styles.taskInfo}>
                                 Pontos: {item.points_weekday} (semana) / {item.points_weekend} (fim de semana) 
                             </Text>
-                            {/* Aqui você pode exibir regras, dias, foto obrigatória, etc. */}
+                            <TouchableOpacity style={styles.completeBtn} onPress={() => router.push({
+                                pathname: "/complete-task",
+                                params: { challengeId: challenge.id, taskId: item.id, task: JSON.stringify(item) }
+                            })}>
+                                <Text style={{ color: "#fff", fontWeight: "bold" }}>Completar Tarefa</Text>
+                            </TouchableOpacity>
                         </View>
                     )}
                     ListEmptyComponent={<Text style={{ color: "#888" }}>Nenhuma tarefa cadastrada</Text>}
@@ -144,5 +149,12 @@ const styles = StyleSheet.create({
     adminButtonText: {
         color: "#fff",
         fontWeight: "bold",
+    },
+    completeBtn: {
+        backgroundColor: "#007bff",
+        padding: 10,
+        borderRadius: 5,
+        alignItems: "center",
+        marginTop: 8,
     },
 });

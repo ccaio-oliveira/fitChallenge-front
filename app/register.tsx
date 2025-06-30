@@ -50,6 +50,7 @@ export default function RegisterScreen() {
                 style={styles.input}
                 placeholder="Senha"
                 secureTextEntry
+                autoComplete="off"
                 value={form.password}
                 onChangeText={t => handleChange("password", t)}
             />
@@ -57,6 +58,7 @@ export default function RegisterScreen() {
                 style={styles.input}
                 placeholder="Confirmar Senha"
                 secureTextEntry
+                autoComplete="off"
                 value={form.password_confirmation}
                 onChangeText={t => handleChange("password_confirmation", t)}
             />
